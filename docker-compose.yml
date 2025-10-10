@@ -1,42 +1,32 @@
 version: "3.9"
 
-networks:
-  proxy:
-    driver: bridge
-
-volumes:
-  n8n_data:
-  nocodb_data:
-  neo4j_data:
-  neo4j_logs:
-  neo4j_import:
-  neo4j_plugins:
-  nginx_conf:
-  nginx_cache:
+# networks:
+#   proxy:
+#     driver: bridge
 
 services:
   # ---------------------------
   # Reverse Proxy (nginx)
   # ---------------------------
-  nginx:
-    image: nginx:1.27-alpine
-    container_name: reverse-proxy
-    restart: unless-stopped
-    ports:
-      - "80:80"
-      # Für TLS später: - "443:443"
-    volumes:
-      - ./nginx/conf.d:/etc/nginx/conf.d:ro
-      - nginx_conf:/etc/nginx
-      - nginx_cache:/var/cache/nginx
-    networks:
-      - proxy
-    depends_on:
-      - nextcloud-aio-master
-      - n8n
-      - nocodb
-      - neo4j
-      - tesseract
+  # nginx:
+  #   image: nginx:1.27-alpine
+  #   container_name: reverse-proxy
+  #   restart: unless-stopped
+  #   ports:
+  #     - "80:80"
+  #     # Für TLS später: - "443:443"
+  #   volumes:
+  #     - ./nginx/conf.d:/etc/nginx/conf.d:ro
+  #     - nginx_conf:/etc/nginx
+  #     - nginx_cache:/var/cache/nginx
+  #   networks:
+  #     - proxy
+  #   depends_on:
+  #     - nextcloud-aio-master
+  #     - n8n
+  #     - nocodb
+  #     - neo4j
+  #     - tesseract
 
   # ---------------------------
   # Nextcloud AIO (Master)
@@ -48,8 +38,8 @@ services:
     container_name: nextcloud-aio-master
     restart: unless-stopped
     privileged: true
-    networks:
-      - proxy
+    # networks:
+    #   - proxy
     ports:
       # Setup-UI (nur lokal bzw. geschützt nutzen)
       - "8080:8080"
@@ -63,8 +53,6 @@ services:
       APACHE_IP_BINDING: 0.0.0.0
       NEXTCLOUD_DATADIR: /mnt/docker-aio-config/data
   # separates benanntes Volume außerhalb der volumes:-Sektion oben (damit AIO es wie dokumentiert findet)
-volumes:
-  nextcloud_aio_master_cont:
 
   # ---------------------------
   # n8n
@@ -73,8 +61,8 @@ volumes:
     image: n8nio/n8n:latest
     container_name: n8n
     restart: unless-stopped
-    networks:
-      - proxy
+    # networks:
+    #   - proxy
     environment:
       - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY}
       - N8N_HOST=${N8N_HOST}
@@ -94,8 +82,8 @@ volumes:
     image: nocodb/nocodb:latest
     container_name: nocodb
     restart: unless-stopped
-    networks:
-      - proxy
+    # networks:
+    #   - proxy
     environment:
       - NC_PUBLIC_URL=http://${NOCODB_HOST}
     volumes:
@@ -111,8 +99,8 @@ volumes:
     image: neo4j:5
     container_name: neo4j
     restart: unless-stopped
-    networks:
-      - proxy
+    # networks:
+    #   - proxy
     environment:
       - NEO4J_AUTH=${NEO4J_USER}/${NEO4J_PASS}
       - NEO4J_server_memory_pagecache_size=1G
@@ -126,8 +114,8 @@ volumes:
       - neo4j_import:/var/lib/neo4j/import
       - neo4j_plugins:/plugins
     expose:
-      - "7474"   # HTTP
-      - "7687"   # Bolt
+      - "7474" # HTTP
+      - "7687" # Bolt
 
   # ---------------------------
   # Tesseract (REST)
@@ -136,11 +124,21 @@ volumes:
     image: tesseractshadow/tesseract4re:latest
     container_name: tesseract
     restart: unless-stopped
-    networks:
-      - proxy
+    # networks:
+    #   - proxy
     expose:
       - "${TESS_PORT}"
     environment:
       - PORT=${TESS_PORT}
       # Standardmäßig Englisch; weitere Sprachen via volumes / env möglich
 
+volumes:
+  n8n_data:
+  nocodb_data:
+  neo4j_data:
+  neo4j_logs:
+  neo4j_import:
+  neo4j_plugins:
+  # nginx_conf:
+  # nginx_cache:
+  nextcloud_aio_master_cont:
